@@ -1,5 +1,39 @@
 # Madden 27 Beta Roster → Madden 26 Converter (COMPLETE)
 
+## REVERSE DIRECTION (M26 → M27 FULL GAME) — added 2026-08-24
+
+Working dir: `C:\Users\Ninja\AppData\Local\Temp\opencode\m26to27` (fresh bep713/madden-file-tools clone @ 6c7eb93 + `m27converter\` backup overlaid over filetypes/helpers/streams + bit-buffer/crc-32/stream-parser).
+Converter script: `convert_m26_to_m27.js`. First job: M26 `ROSTER-2019` → M27 `ROSTER-2019` (in-game test pending).
+
+### Full-game M27 RL1 format differs from M27 BETA (do not mix them up!)
+| Table | M27 full (Official, ver `Madden-27-RL1-9141905`) | M26 |
+|---|---|---|
+| PLAY | **106 fields**, salary = PSBO only | 139 fields incl. PCON, PSA0-6, PSB0-6, PSBO, PGHE, PSKI, TRB* |
+| PLCT | 19 int fields: PGID,PCON,PSA0-7,PSB0-4,CNTC,CSGY,CTCY,CTVY (2366 recs) | none (salaries live in PLAY) |
+| PRSN | PGID,PRFC,DNA0-7 (3041) | none |
+| INJY | identical schema both games ✓ | ✓ swappable directly |
+| DCHT/DFTP/TEAM/BLOB | same table kinds; counts differ per save | swap wholesale |
+
+- Only M27-only PLAY key: `PLCE` (1). We did NOT inject it — forward-conversion evidence says engine tolerates missing keys. If game misbehaves, inject cloned-zero PLCE into every PLAY record as fallback.
+- PSB5/PSB6 (M26) have no M27 home — dropped.
+- Reverse salary recipe: for each PLAY record build PLCT row {PGID, PCON←PLAY.PCON, PSA0-6←PLAY, PSA7=0, PSB0-4←PLAY.PSB0-4, CNTC/CSGY/CTCY/CTVY=0}; synthesize PRSN rows {PGID, PRFC=0, DNA0-7=0}; drop PLGS.
+- Output table order must match template order: BLOB,DCHT,DFTP,INJY,PLAY,PLCT,PRSN,TEAM.
+- Building new records: clone donor TDB2Field (key/rawKey/type), set `.value` — setter re-encodes LEB raw automatically. Writer serializes `field.raw`, so nothing else needed.
+
+### Round-trip expectations (important)
+- load→save is NOT byte-identical by design: parser `_normalizeRecords` injects missing fields w/ defaults, re-encodes LEB widths, writer sorts fields alphabetically. Inner payload grows (~+9% on M27 Official).
+- The REAL validity bar: exact outer size 6,291,530 · stored len@0x12 == inflated len · CRC32@0x1A matches · output reloads with correct table/entry counts.
+- Converted output passed all of these; PLAY[0] spot-check survived (PGID 112, POVR 80, PSBO 300; PLCT PCON=4 PSA0=615 PSB0=75).
+
+### Gotchas this session
+- Repo backup `m27converter\` lacks `services/` — always rebuild from fresh upstream clone + overlay backup dirs.
+- npm needs `npm.cmd` (exec policy); package.json must be renamed .bak before install (native lz4).
+
+---
+
+## ORIGINAL: M27 Beta → M26 (completed Aug 16, 2026)
+
+
 ## Status: DONE ✅
 Converted `ROSTER-MADDEN27` (Madden 27 Beta) into a working Madden 26 save.
 **Verified in-game**: loads, played plays with Browns + Bengals, no crash. (Aug 16, 2026)
