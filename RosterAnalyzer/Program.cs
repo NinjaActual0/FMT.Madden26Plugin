@@ -1,7 +1,7 @@
 ﻿using Madden26Plugin.Roster;
 using System.IO.Compression;
 
-var filePath = @"C:\Users\Ninja\source\repos\FMT.Madden26Plugin\ROSTER-Community.bin";
+var filePath = @"E:\Game stuff\mods\Repos\Repos\FMT.Madden26Plugin\ROSTER-Community.bin";
 var originalBytes = File.ReadAllBytes(filePath);
 Console.WriteLine($"Original size: {originalBytes.Length}");
 
